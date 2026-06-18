@@ -6,8 +6,8 @@ on:
     branches:
       - main
     paths:
-      - 'src/api/**'
-      - '.github/workflows/build-push.yml'
+      - "src/api/**"
+      - ".github/workflows/build-push.yml"
   workflow_dispatch:
 
 env:
