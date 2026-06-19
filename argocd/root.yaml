@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/Vuong-Bach/temp.git
     path: argocd/apps
-    targetRevision: main
+    targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

@@ -31,6 +31,22 @@ spec:
           value: "v0.0.1"
         - name: ERROR_RATE
           value: "0"
+        # Inject từ ESO-managed secrets (ESO sync từ AWS Secrets Manager)
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_PASSWORD
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_USER
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-secret
+              key: API_KEY
         livenessProbe:
           httpGet:
             path: /healthz

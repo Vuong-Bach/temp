@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/Vuong-Bach/temp.git
     path: app-common
-    targetRevision: main
+    targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
     namespace: demo

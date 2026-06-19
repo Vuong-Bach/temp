@@ -1,16 +1,17 @@
-# ArgoCD App: Deploy AnalysisTemplate cho canary analysis
+# ArgoCD App: ESO - Auth via IRSA (IAM Role for Service Account)
+# ClusterSecretStore + ExternalSecret cho w10/db/password
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: analysis
+  name: eso-irsa
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
     repoURL: https://github.com/Vuong-Bach/temp.git
-    path: app-analysis
+    path: app-eso-irsa
     targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
@@ -20,4 +21,5 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
+    - CreateNamespace=true
     - ServerSideApply=true

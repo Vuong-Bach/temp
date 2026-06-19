@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - 'src/api/**'
       - '.github/workflows/build-push.yml'
@@ -12,7 +13,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/w10-api
 
 jobs:
   build-and-push:
@@ -26,6 +26,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set lowercase image name
+        id: image
+        run: echo "name=$(echo '${{ github.repository_owner }}/w10-api' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set tag suffix based on branch
+        id: suffix
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "value=-snapshot" >> $GITHUB_OUTPUT
+          else
+            echo "value=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Calculate semantic version
         id: semver
@@ -48,11 +61,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
           tags: |
             type=raw,value=latest
-            type=raw,value=${{ steps.semver.outputs.version }}
-            type=sha,prefix=v${{ steps.semver.outputs.version }}-
+            type=raw,value=${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}
+            type=sha,prefix=v${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -62,10 +75,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Update rollout.yaml with new version
+      - name: Update rollout.yaml with branch-aware image tag
         run: |
-          sed -i "s|image: ghcr.io/.*/w10-api:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.semver.outputs.version }}|g" app-api/rollout.yaml
-          sed -i "s|value: \"v.*\"|value: \"v${{ steps.semver.outputs.version }}\"|g" app-api/rollout.yaml
+          IMAGE_TAG="${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}"
+          sed -i "s|image: ghcr.io/.*/w10-api:.*|image: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${IMAGE_TAG}|g" app-api/rollout.yaml
+          sed -i "s|value: \"v.*\"|value: \"v${IMAGE_TAG}\"|g" app-api/rollout.yaml
 
       - name: Commit and push version update
         run: |
@@ -75,11 +89,11 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: bump version to v${{ steps.semver.outputs.version }}"
+            git commit -m "chore: bump version to v${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}"
             git push
           fi
 
       - name: Create git tag
         run: |
-          git tag v${{ steps.semver.outputs.version }}
-          git push origin v${{ steps.semver.outputs.version }}
+          git tag v${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}
+          git push origin v${{ steps.semver.outputs.version }}${{ steps.suffix.outputs.value }}

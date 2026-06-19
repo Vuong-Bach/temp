@@ -1,16 +1,19 @@
-# ArgoCD App: Deploy AnalysisTemplate cho canary analysis
+# ArgoCD App: ESO - Auth via Static Access Key
+# SecretStore + ExternalSecret cho w10/api/key
+# Yêu cầu: tạo K8s Secret "aws-credentials" trong namespace demo TRƯỚC khi sync
+#   kubectl apply -f app-eso-accesskey/aws-credentials.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: analysis
+  name: eso-accesskey
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
     repoURL: https://github.com/Vuong-Bach/temp.git
-    path: app-analysis
+    path: app-eso-accesskey
     targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
@@ -20,4 +23,5 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
+    - CreateNamespace=true
     - ServerSideApply=true
